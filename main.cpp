@@ -1,28 +1,28 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <stdint.h>
 #include <type_traits>
 
-//SFINAE‚ğ‚â‚ë‚¤‚Æ‚µ‚½cŠ[
+//SFINAEã‚’ã‚„ã‚ã†ã¨ã—ãŸæ®‹éª¸
 //template <typename T>
 //struct is_number : std::integral_constant<std::is_integral<T>::value || std::is_floating_point<T>::value> {};
 
-/// @brief minŠÖ”
-/// @tparam T Œ^–¼
-/// @param A ”’lA
-/// @param B ”’lB
-/// @return ¬‚³‚¢‚Ù‚¤‚Ì’l
+/// @brief miné–¢æ•°
+/// @tparam T å‹å
+/// @param A æ•°å€¤A
+/// @param B æ•°å€¤B
+/// @return å°ã•ã„ã»ã†ã®å€¤
 template <typename T>
 T Min(T A, T B) {
 	return (A < B) ? A : B;
 }
 
-/// @brief minŠÖ”(charŒ^)
-/// @param A ”’lA
-/// @param B ”’lB
-/// @return ‹ó”’•¶š
+/// @brief miné–¢æ•°(charå‹)
+/// @param A æ•°å€¤A
+/// @param B æ•°å€¤B
+/// @return ç©ºç™½æ–‡å­—
 template<>
 char Min<char>(char A, char B) {
-	std::cout << "”šˆÈŠO‚Í‘ã“ü‚Å‚«‚Ü‚¹‚ñ" << std::endl;
+	std::cout << "æ•°å­—ä»¥å¤–ã¯ä»£å…¥ã§ãã¾ã›ã‚“" << std::endl;
 	return ' ';
 }
 
