@@ -19,11 +19,10 @@ T Min(T A, T B) {
 /// @brief min関数(char型)
 /// @param A 数値A
 /// @param B 数値B
-/// @return 空白文字
-template<>
-char Min<char>(char A, char B) {
-	std::cout << "数字以外は代入できません" << std::endl;
-	return ' ';
+/// @return 数字以外は代入できません
+char *Min(char A, char B) {
+	static char str[] = "数字以外は代入できません";
+	return str;
 }
 
 int main(void) {
