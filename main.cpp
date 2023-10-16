@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <random>
 #include <chrono>
+#include <functional>
 
 int32_t GetRandom(int32_t min, int32_t max) {
 
@@ -21,9 +22,9 @@ int32_t GetRandom(int32_t min, int32_t max) {
 /// @brief 遅延実行
 /// @param delay 遅延秒数
 /// @param func 実行する関数
-int32_t DelayFunction(int32_t delay, int32_t(*func)()) {
+void DelayFunction(int32_t delay, const std::function<void()> &func) {
 	std::this_thread::sleep_for(std::chrono::seconds(delay));
-	return func();
+	func();
 }
 
 
@@ -49,8 +50,8 @@ int main(void) {
 
 	int32_t dice;
 
-	dice = DelayFunction(3, []() {
-		return GetRandom(1, 6);
+	DelayFunction(3, [&dice]() {
+		dice = GetRandom(1, 6);
 		});
 	std::cout << "賽の出目は[" << dice << "]でした" << std::endl;;
 
