@@ -2,7 +2,9 @@
 #include <memory>
 #include <array>
 #include <assert.h>
-#include "Shape.h"
+#include "Shape/IShape.h"
+#include "Shape/Rectangle.h"
+#include "Shape/Circle.h"
 
 int main(void) {
 
