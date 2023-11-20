@@ -8,9 +8,27 @@
 
 namespace SoLib {
 
+	namespace Traits {
+
+		/// @brief 浮動小数点型である
+		template <typename T>
+		concept IsFloatPoint = std::is_floating_point_v<T>;
+
+		/// @brief 整数型である
+		template <typename T>
+		concept IsIntegral = std::is_integral_v<T>;
+
+		/// @brief 数値型である
+		template <typename T>
+		concept IsNumber = std::is_floating_point_v<T> || std::is_integral_v<T>;
+
+	}
+
+	using namespace Traits;
+
 	namespace Time {
 
-		template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+		template <SoLib::Traits::IsFloatPoint T>
 		class Second final {
 		public:
 			Second(T time = 0.f) { time_ = time; }
@@ -42,7 +60,7 @@ namespace SoLib {
 		/// @brief 遅延実行
 		/// @param delay 遅延秒数
 		/// @param func 実行する関数
-		template<typename T, typename U>
+		template<typename T, SoLib::Traits::IsFloatPoint U>
 		T SetTimeOut(const std::function<T()> &func, Second<U> delay) {
 			std::this_thread::sleep_for(static_cast<std::chrono::duration<U>>(delay));
 			func();
@@ -60,7 +78,7 @@ namespace SoLib {
 
 	namespace Random {
 
-		template <typename T>
+		template <SoLib::Traits::IsNumber T>
 		T GetRandom(T min, T max) {
 
 			// 数値型でない場合
