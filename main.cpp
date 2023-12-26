@@ -156,25 +156,32 @@ int main(void) {
 
 	while ((c = fgetc(file)) != EOF) {
 
-		// ファイルが
+		// ダブルクオートで囲われているなら
 		if (not isBackSlash && c == '"') {
+			// クオート内部であるなら
 			if (inQuote) {
+				// 文字列にバッファのデータを転送
 				nameList.push_back(bufferVec.data());
+				// バッファを初期化
 				bufferVec = "";
+				// クオートから出る
 				inQuote = false;
 			}
 			else {
+				// クオートの中に入る
 				inQuote = true;
 			}
 		}
+		// クオートが有効ならバッファに追加
 		else if (inQuote) {
-			if (c != '\\') {
+			// バックスラッシュが有効か、文字がバックスラッシュでない場合追加
+			if (isBackSlash || c != '\\') {
 				bufferVec += c;
 			}
 		}
 
 		// バックスラッシュが有効か切り替える
-		if (c == '\\') {
+		if (not isBackSlash && c == '\\') {
 			isBackSlash = true;
 		}
 		else {
