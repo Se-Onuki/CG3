@@ -152,9 +152,12 @@ int main(void) {
 	char c;
 
 	bool inQuote = false;
+	bool isBackSlash = false;
 
 	while ((c = fgetc(file)) != EOF) {
-		if (c == '"') {
+
+		// ファイルが
+		if (not isBackSlash && c == '"') {
 			if (inQuote) {
 				nameList.push_back(bufferVec.data());
 				bufferVec = "";
@@ -165,7 +168,17 @@ int main(void) {
 			}
 		}
 		else if (inQuote) {
-			bufferVec += c;
+			if (c != '\\') {
+				bufferVec += c;
+			}
+		}
+
+		// バックスラッシュが有効か切り替える
+		if (c == '\\') {
+			isBackSlash = true;
+		}
+		else {
+			isBackSlash = false;
 		}
 	}
 	fclose(file);
