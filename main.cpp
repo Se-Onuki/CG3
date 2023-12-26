@@ -2,7 +2,6 @@
 #include <iostream>
 #include <list>
 #include <vector>
-#include <array>
 
 class String {
 public:
@@ -126,6 +125,7 @@ public:
 		return result;
 	}
 
+
 private:
 	// 文字列
 	std::vector<char> string;
@@ -134,6 +134,18 @@ private:
 std::ostream &operator<<(std::ostream &stream, const String &value) {
 	return stream << value.data();
 }
+
+using NumID = std::pair<uint32_t, String>;
+
+bool operator <(const NumID &a, const NumID &b) {
+	return a.first < b.first;
+}
+
+bool cmp(const NumID &a, const NumID &b)
+{
+	return a.first < b.first;
+}
+
 
 int main(void) {
 
@@ -190,8 +202,28 @@ int main(void) {
 	}
 	fclose(file);
 
-	for (const auto &str : nameList) {
-		std::cout << str << std::endl;
+	std::list<std::pair<uint32_t, String>> sortList;
+
+	for (const auto &nameItem : nameList) {
+
+		uint32_t nameNum;
+		String numText;
+		for (char item : nameItem) {
+			if (isdigit(item)) {
+				numText += item;
+			}
+		}
+		char *end;
+		nameNum = static_cast<uint32_t>(strtol(numText.data(), &end, 10u));
+
+		sortList.push_back(std::make_pair(nameNum, nameItem));
+	}
+
+	sortList.sort(cmp);
+
+
+	for (const auto &str : sortList) {
+		std::cout << str.second << std::endl;
 	}
 
 
