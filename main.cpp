@@ -1,7 +1,8 @@
-#include <iostream>
 #include <algorithm>
-#include <vector>
+#include <iostream>
 #include <list>
+#include <vector>
+#include <array>
 
 class String {
 public:
@@ -43,6 +44,12 @@ public:
 
 	inline String &operator+= (const String &str) {
 		return *this += str.data();
+	}
+
+	inline String &operator+= (const char str) {
+		string.back() = str;
+		string.push_back('\0');
+		return *this;
 	}
 
 	/// @brief 文字列の追加
@@ -128,81 +135,46 @@ std::ostream &operator<<(std::ostream &stream, const String &value) {
 	return stream << value.data();
 }
 
-struct StationList {
-
-	using StringList = std::list<String>;
-
-	StringList stationList_;
-
-	void push_back(const char *const name) {
-		this->stationList_.push_back(name);
-	}
-
-	StringList::iterator begin() { return stationList_.begin(); }
-	StringList::const_iterator begin()const { return stationList_.begin(); }
-
-	StringList::iterator end() { return stationList_.end(); }
-	StringList::const_iterator end() const { return stationList_.end(); }
-
-};
-std::ostream &operator<<(std::ostream &stream, const StationList &stationList) {
-
-	int32_t index = 0;
-	const String jy{ "JY" };
-	for (const auto &stationItem : stationList) {
-		stream << jy + String::to_string(++index) + " " + stationItem << std::endl;
-	}
-
-	return stream;
-}
-
 int main(void) {
 
-	StationList stationList;
-	stationList.push_back("Tokyo");
-	stationList.push_back("Kanda");
-	stationList.push_back("Akihabara");
-	stationList.push_back("Okachimachi");
-	stationList.push_back("Ueno");
-	stationList.push_back("Uguisudani");
-	stationList.push_back("Nippori");
-	stationList.push_back("Tabata");
-	stationList.push_back("Komagome");
-	stationList.push_back("Sugamo");
-	stationList.push_back("Otsuka");
-	stationList.push_back("Ikebukuro");
-	stationList.push_back("Mejiro");
-	stationList.push_back("Takadanobaba");
-	stationList.push_back("Shin-Okubo");
-	stationList.push_back("Shinjuku");
-	stationList.push_back("Yoyogi");
-	stationList.push_back("Harajuku");
-	stationList.push_back("Shibuya");
-	stationList.push_back("Ebisu");
-	stationList.push_back("Meguro");
-	stationList.push_back("Gotanda");
-	stationList.push_back("Osaki");
-	stationList.push_back("Shinagawa");
-	stationList.push_back("Tamachi");
-	stationList.push_back("Hamamatsucho");
-	stationList.push_back("Shimbashi");
-	stationList.push_back("Yurakucho");
+	// ファイル
+	FILE *file;
+	fopen_s(&file, "PG3_05_02.txt", "r");
+	// もしファイルが開けなかったらエラーとして扱う
+	if (not file) {
+		std::cerr << "Failed to open the file." << std::endl;
+		return 1;
+	}
 
-	std::cout << "1970year : \n" << stationList;
+	std::list<String> nameList;
 
-	std::cout << "\n\n";
+	String bufferVec;
+	char c;
 
-	auto result = std::find(stationList.begin(), stationList.end(), "Tabata");
-	stationList.stationList_.insert(result, "Nishi-Nippori");
+	bool inQuote = false;
 
-	std::cout << "2019year : \n" << stationList;
+	while ((c = fgetc(file)) != EOF) {
+		if (c == '"') {
+			if (inQuote) {
+				nameList.push_back(bufferVec.data());
+				bufferVec = "";
+				inQuote = false;
+			}
+			else {
+				inQuote = true;
+			}
+		}
+		else if (inQuote) {
+			bufferVec += c;
+		}
+	}
+	fclose(file);
 
-	std::cout << "\n\n";
+	for (const auto &str : nameList) {
+		std::cout << str << std::endl;
+	}
 
-	result = std::find(stationList.begin(), stationList.end(), "Tamachi");
-	stationList.stationList_.insert(result, "Takanawa Gateway");
 
-	std::cout << "2022year : \n" << stationList;
 
 	return 0;
 }
