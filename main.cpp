@@ -31,11 +31,11 @@ int main(void)
 					std::unique_lock<std::mutex> uniqueLock(mutex); // lock関数だと、unlock関数を呼び忘れるリスクがあるため
 					// lockを呼んだスレッドで使用している変数へのアクセスをlockする。
 
-					// スレッドを停止
+					// スレッドを待機
 					condition.wait(uniqueLock, [&]()->bool
 						{
-							// csvのデータが存在しない場合
-							return not static_cast<bool>(csv);
+							// csvのデータが存在しない場合はtrue ( 待機しない )
+							return not static_cast<bool>(csv); // もしtrueなら、待機は行われない。
 						});
 
 					csv = SoLib::IO::File{ "test.csv" };
