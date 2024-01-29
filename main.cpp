@@ -18,29 +18,29 @@ int main(void)
 	// CSVファイル
 	SoLib::IO::CSV csv;
 	// ループを抜けるためのフラグ
-	// bool exit = false;
+	bool exit = false;
 
 	// バックグラウンド処理
 	std::thread th([&]()
 		{
 			// 離脱フラグが立っていない場合ループする
-			// while (not exit) {
-			// csvが空なら読み込む
-			if (not csv) {
-				// スレッド開始時にロック用のクラスのインスタンスを生成
-				std::unique_lock<std::mutex> uniqueLock(mutex); // lock関数だと、unlock関数を呼び忘れるリスクがあるため
-				// lockを呼んだスレッドで使用している変数へのアクセスをlockする。
+			while (not exit) {
+				// csvが空なら読み込む
+				if (not csv) {
+					// スレッド開始時にロック用のクラスのインスタンスを生成
+					std::unique_lock<std::mutex> uniqueLock(mutex); // lock関数だと、unlock関数を呼び忘れるリスクがあるため
+					// lockを呼んだスレッドで使用している変数へのアクセスをlockする。
 
-				// スレッドを停止
-				condition.wait(uniqueLock, [&]()->bool
-					{
-						// csvのデータが存在しない場合
-						return not static_cast<bool>(csv);
-					});
+					// スレッドを停止
+					condition.wait(uniqueLock, [&]()->bool
+						{
+							// csvのデータが存在しない場合
+							return not static_cast<bool>(csv);
+						});
 
-				csv = SoLib::IO::File{ "test.csv" };
+					csv = SoLib::IO::File{ "test.csv" };
+				}
 			}
-			// }
 		});
 
 	while (true) {
@@ -59,6 +59,7 @@ int main(void)
 		condition.notify_all();
 	}
 
+	exit = true;
 	th.join();
 
 	return 0;
