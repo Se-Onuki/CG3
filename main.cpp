@@ -5,7 +5,7 @@
 
 static inline void TransponeArray(std::array<__m128, 2u> *data)
 {
-	constexpr int32_t mask = 108; // 0, 3, 2, 1
+	constexpr int32_t mask = _MM_SHUFFLE(1, 2, 3, 0); // 0, 3, 2, 1
 
 	constexpr int32_t blendMask = 0b0100;
 
@@ -31,33 +31,16 @@ struct Matrix3x3 {
 		union alignas(16) SimdVec {
 			std::array<__m128, 2u> simd;
 			std::array<float, 8u> arr;
-			// Matrix3x3 m;
 		};
 
 		Matrix3x3 result;
 		result.m[2][2] = m[2][2];
 
-		// Load the data into a single __m128
+		// ’l‚ð‘ã“ü
 		SimdVec calc = { _mm_load_ps(m.data()->data()), _mm_load_ps(m.data()->data() + 4u) };
-
-		// SimdVec calc = { .m = *this };
+		// “]’uŠÖ”
 		TransponeArray(&calc.simd);
-		//// Transpose using shuffle
-		//__m128 shuf1 = _mm_shuffle_ps(calc[0], calc[0], _MM_SHUFFLE(3, 1, 2, 0));
-		//__m128 shuf2 = _mm_shuffle_ps(calc[1], calc[1], _MM_SHUFFLE(3, 1, 2, 0));
-
-		//// Concatenate the shuffles to get the final transposed result
-		// result.m[0][0] = _mm_cvtss_f32(calc[0]);
-		// result.m[0][1] = _mm_cvtss_f32(shuf1);
-		// result.m[0][2] = _mm_cvtss_f32(_mm_shuffle_ps(shuf2, shuf1, _MM_SHUFFLE(2, 0, 2, 0)));
-
-		// result.m[1][0] = _mm_cvtss_f32(_mm_shuffle_ps(calc[0], shuf1, _MM_SHUFFLE(2, 0, 2, 0)));
-		// result.m[1][1] = _mm_cvtss_f32(shuf2);
-		// result.m[1][2] = _mm_cvtss_f32(_mm_shuffle_ps(shuf1, shuf2, _MM_SHUFFLE(3, 1, 3, 1)));
-
-		// result.m[2][0] = _mm_cvtss_f32(_mm_shuffle_ps(shuf1, calc[1], _MM_SHUFFLE(3, 1, 3, 1)));
-		// result.m[2][1] = _mm_cvtss_f32(_mm_shuffle_ps(shuf2, calc[1], _MM_SHUFFLE(3, 1, 3, 1)));
-
+		// Œ‹‰Ê‚ð‘ã“ü
 		_mm_store_ps(result.m.data()->data(), calc.simd[0]);
 		_mm_store_ps(result.m.data()->data() + 4u, calc.simd[1]);
 
