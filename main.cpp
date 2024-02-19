@@ -1,197 +1,140 @@
+#include <array>
+#include <chrono>
+#include <immintrin.h>
 #include <iostream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <type_traits>
 
-struct Vector3 {
-	float x, y, z;
+static inline void TransponeArray(std::array<__m128, 2u> *data)
+{
+	/*static const __m256i indices = _mm256_set_epi32(5, 2, 7, 4, 1, 6, 3, 0);
 
-	static uint32_t size() { return 3u; }
+	*data = _mm256_permutevar8x32_ps(*data, indices);*/
 
-	float *const begin() { return &x; }
-	const float *const begin() const { return &x; }
-	const float *const cbegin() const { return &x; }
+	//_mm256_storeu_ps(data, result);
 
-	float *const end() { return begin() + size(); }
-	const float *const end() const { return end(); }
-	const float *const cend() const { return end(); }
+	// static const uint32_t mask = _MM_SHUFFLE(1, 2, 3, 0); // 0,3,6,1,4,7,2,5
 
-	float *const data() { return begin(); }
-	const float *const data() const { return begin(); }
-	const float *const cdata() const { return begin(); }
-};
+	// __m256 temp1 = _mm256_permute_ps(data, mask);
+	// __m256 temp2 = _mm256_permute2f128_ps(temp1, temp1, 1);
 
-struct VerticalVector3 {
-	float x, y, z;
+	// data = _mm256_blend_ps(temp1, temp2, 0b01000100);
 
-	uint32_t size() { return 3u; }
+	/*__m128 input_low = _mm_loadu_ps(data);
+	__m128 input_high = _mm_loadu_ps(data.data() + 4);*/
 
-	float *const begin() { return &x; }
-	const float *const begin() const { return &x; }
-	const float *const cbegin() const { return &x; }
+	constexpr uint32_t mask = _MM_SHUFFLE(1, 2, 3, 0); // 0, 3, 2, 1
 
-	float *const end() { return begin() + size(); }
-	const float *const end() const { return end(); }
-	const float *const cend() const { return end(); }
+	__m128 temp = _mm_permute_ps(data->at(0), mask);
+	data->at(1) = _mm_shuffle_ps(data->at(1), data->at(1), mask);
 
-	float *const data() { return begin(); }
-	const float *const data() const { return begin(); }
-	const float *const cdata() const { return begin(); }
-};
 
-struct Mat2x2 {
-	float m[2][2];
+	// Swap the second elements
+	data->at(0) = _mm_blend_ps(temp, data->at(1), 0b0100);
+	data->at(1) = _mm_blend_ps(data->at(1), temp, 0b0100);
 
-	uint32_t size() { return 4u; }
+	//__m128 temp2_low = _mm_shuffle_ps(temp1_low, temp1_low, _MM_SHUFFLE(2, 3, 0, 1)); // Swap low elements
+	//__m128 temp2_high = _mm_shuffle_ps(temp1_high, temp1_high, _MM_SHUFFLE(2, 3, 0, 1)); // Swap high elements
 
-	float *const begin() { return *m; }
-	const float *const begin() const { return *m; }
-	const float *const cbegin() const { return *m; }
+	//data->at(0) = _mm_shuffle_ps(temp1_low, temp2_low, _MM_SHUFFLE(2, 0, 2, 0));
+	//data->at(1) = _mm_shuffle_ps(temp1_high, temp2_high, _MM_SHUFFLE(2, 0, 2, 0));
 
-	float *const end() { return begin() + size(); }
-	const float *const end() const { return end(); }
-	const float *const cend() const { return end(); }
 
-	float *const data() { return begin(); }
-	const float *const data() const { return begin(); }
-	const float *const cdata() const { return begin(); }
-};
-
-// Traits template declaration
-template <typename T>
-struct Traits;
-
-// Traits specialization for void
-template<>
-struct Traits<void> {
-	static constexpr auto Name = "void";
-	static constexpr uint32_t Rows = 0u;
-	static constexpr uint32_t Columns = 0u;
-	using ElementType = void;
-};
-
-// Traits specialization for int32_t
-template<>
-struct Traits<int32_t> {
-	using Type = int32_t;
-	static constexpr auto Name = "int32_t";
-	static constexpr uint32_t Rows = 1u;
-	static constexpr uint32_t Columns = 1u;
-	static constexpr uint32_t Size = Rows * Columns;
-	using ElementType = int32_t;
-
-	static const ElementType *CBegin(const Type &data) { return &data; }
-	static const ElementType *End(const Type &data) { return CBegin(data) + Size; }
-};
-
-template<>
-struct Traits<Vector3> {
-	using Type = Vector3;
-	static constexpr auto Name = "Vector3";
-	static constexpr uint32_t Rows = 1u;
-	static constexpr uint32_t Columns = 3u;
-	static constexpr uint32_t Size = Rows * Columns;
-	using ElementType = float;
-
-	static const ElementType *CBegin(const Type &data) { return data.cbegin(); }
-	static const ElementType *End(const Type &data) { return CBegin(data) + Size; }
-};
-
-template<>
-struct Traits<VerticalVector3> {
-	using Type = VerticalVector3;
-	static constexpr auto Name = "VerticalVector3";
-	static constexpr uint32_t Rows = 3u;
-	static constexpr uint32_t Columns = 1u;
-	static constexpr uint32_t Size = Rows * Columns;
-	using ElementType = float;
-
-	static const ElementType *CBegin(const Type &data) { return data.cbegin(); }
-	static const ElementType *End(const Type &data) { return CBegin(data) + Size; }
-};
-
-template<>
-struct Traits<Mat2x2> {
-	using Type = Mat2x2;
-	static constexpr auto Name = "Mat2x2";
-	static constexpr uint32_t Rows = 2u;
-	static constexpr uint32_t Columns = 2u;
-	static constexpr uint32_t Size = Rows * Columns;
-	using ElementType = float;
-
-	static const ElementType *CBegin(const Type &data) { return data.cbegin(); }
-	static const ElementType *End(const Type &data) { return CBegin(data) + Size; }
-};
-
-// ‰¼‚É•ÏŠ·‚Å‚«‚È‚¢Œ^‚ª—^‚¦‚ç‚ê‚½ê‡‚É‚Í‹ó•¶š‚ğ•Ô‚·
-template <typename T, typename = void>
-struct has_to_string : std::false_type {};
-
-// std::to_string‚ª‘¶İ‚·‚éê‡‚É‚Í true_type ‚É‚È‚é“Áê‰»
-template <typename T>
-struct has_to_string<T, std::void_t<decltype(std::to_string(std::declval<T>()))>> : std::true_type {};
-
-template<typename T>
-std::string to_string(const T &data) {
-	if constexpr (has_to_string<T>::value) {
-		return std::to_string(data);
-	}
-	else {
-		return to_string_custom(data);
-	}
 }
 
-template <typename T>
-std::string to_string_custom(const T &data) {
-	uint32_t itemCount = Traits<T>::Size;
-	if (itemCount == 0u) {
-		return "";
+struct Matrix3x3 {
+	std::array<std::array<float, 3u>, 3u> m;
+	inline Matrix3x3 Transpone() const
+	{
+		return Matrix3x3{ .m{
+			this->m[0][0], this->m[1][0], this->m[2][0],
+			this->m[0][1], this->m[1][1], this->m[2][1],
+			this->m[0][2], this->m[1][2], this->m[2][2]} };
 	}
-	std::string result;
+	inline Matrix3x3 TransponeSIMD() const
+	{
+		union/* alignas(16) */SimdVec {
+			std::array<__m128, 2u> simd;
+			std::array<float, 8u> arr;
+			//Matrix3x3 m;
+		};
 
-	if (Traits<T>::Rows > 1u) {
-		result += "{\n";
+		Matrix3x3 result;
+		result.m[2][2] = m[2][2];
+
+		// Load the data into a single __m128
+		SimdVec calc = { _mm_load_ps(m.data()->data()), _mm_load_ps(m.data()->data() + 4u) };
+
+		//SimdVec calc = { .m = *this };
+		TransponeArray(&calc.simd);
+		//// Transpose using shuffle
+		//__m128 shuf1 = _mm_shuffle_ps(calc[0], calc[0], _MM_SHUFFLE(3, 1, 2, 0));
+		//__m128 shuf2 = _mm_shuffle_ps(calc[1], calc[1], _MM_SHUFFLE(3, 1, 2, 0));
+
+		//// Concatenate the shuffles to get the final transposed result
+		//result.m[0][0] = _mm_cvtss_f32(calc[0]);
+		//result.m[0][1] = _mm_cvtss_f32(shuf1);
+		//result.m[0][2] = _mm_cvtss_f32(_mm_shuffle_ps(shuf2, shuf1, _MM_SHUFFLE(2, 0, 2, 0)));
+
+		//result.m[1][0] = _mm_cvtss_f32(_mm_shuffle_ps(calc[0], shuf1, _MM_SHUFFLE(2, 0, 2, 0)));
+		//result.m[1][1] = _mm_cvtss_f32(shuf2);
+		//result.m[1][2] = _mm_cvtss_f32(_mm_shuffle_ps(shuf1, shuf2, _MM_SHUFFLE(3, 1, 3, 1)));
+
+		//result.m[2][0] = _mm_cvtss_f32(_mm_shuffle_ps(shuf1, calc[1], _MM_SHUFFLE(3, 1, 3, 1)));
+		//result.m[2][1] = _mm_cvtss_f32(_mm_shuffle_ps(shuf2, calc[1], _MM_SHUFFLE(3, 1, 3, 1)));
+
+		_mm_store_ps(result.m.data()->data(), calc.simd[0]);
+		_mm_store_ps(result.m.data()->data() + 4u, calc.simd[1]);
+
+		return result;
 	}
-	for (uint32_t y = 0; y < Traits<T>::Rows; ++y) {
-		if (Traits<T>::Rows > 1u) {
-			result += "\t";
-		}
-		if (Traits<T>::Columns > 1u) {
-			result += "{ ";
-		}
-		for (uint32_t x = 0u; x < Traits<T>::Columns; ++x) {
-			result += to_string(*(Traits<T>::CBegin(data) + y * Traits<T>::Columns + x));
-			if (x < Traits<T>::Columns - 1u) {
-				result += ", ";
+
+	static inline friend std::ostream &operator<<(std::ostream &os, const Matrix3x3 &matrix)
+	{
+		for (const auto &row : matrix.m) {
+			for (const float &value : row) {
+				os << value << " ";
 			}
+			os << std::endl;
 		}
-		if (Traits<T>::Columns > 1u) {
-			result += " }";
-		}
-		if (y < Traits<T>::Rows - 1u) {
-			result += ",\n";
-		}
+		return os;
+	}
+};
+
+int main()
+{
+	const uint32_t iterations = 10000000u;
+
+	Matrix3x3 matrix{ .m{
+		0, 1, 2,
+		3, 4, 5,
+		6, 7, 8,
+	} };
+	// Initialize your matrix here...
+
+	Matrix3x3 result;
+	// Benchmark TransponeSIMD
+	auto start = std::chrono::high_resolution_clock::now();
+	for (int i = 0; i < iterations; ++i) {
+		result = matrix.TransponeSIMD();
 	}
 
-	if (Traits<T>::Rows > 1u) {
-		result += "\n}";
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> transponeSIMDDuration = end - start;
+	std::cout << "TransponeSIMD Time: " << transponeSIMDDuration.count() << " seconds\n"
+		<< result << std::endl;
+
+	// Benchmark Transpone
+	start = std::chrono::high_resolution_clock::now();
+	for (int i = 0; i < iterations; ++i) {
+		result = matrix.Transpone();
 	}
+	end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> transponeDuration = end - start;
+	std::cout << "Transpone Time: " << transponeDuration.count() << " seconds\n"
+		<< result << std::endl;
 
-	return result;
-}
-
-int main() {
-
-	int32_t scalarValue = 42;
-	Vector3 vectorValue = { 0, 1, 2 };
-	Mat2x2 matValue{ 0,1,2,3 };
-
-	std::cout << "Scalar Value: " << to_string(10) << std::endl;
-	std::cout << "Scalar Value: " << to_string(scalarValue) << std::endl;
-	std::cout << "Vector Value: " << to_string(vectorValue) << std::endl;
-	std::cout << "Mat Value: " << to_string(matValue) << std::endl;
-	//std::cout << "Matrix Value: " << to_string(matrixValue) << std::endl;
+	// Calculate speedup
+	double speedup = transponeDuration.count() / transponeSIMDDuration.count();
+	std::cout << "Speedup: " << speedup << "x\n";
 
 	return 0;
 }
