@@ -5,15 +5,17 @@
 
 static inline void TransponeArray(std::array<__m128, 2u> *data)
 {
+	// 位置入れ替えのマスク
 	constexpr int32_t mask = _MM_SHUFFLE(1, 2, 3, 0); // 0, 3, 2, 1
-
+	// ブレンド時のマスク
 	constexpr int32_t blendMask = 0b0100;
-
+	// 位置を入れ替え
 	data->at(1) = _mm_permute_ps(data->at(1), mask);
 	__m128 temp = _mm_permute_ps(data->at(0), mask);
-
+	// 特定の箇所の
 	data->at(0) = _mm_blend_ps(temp, data->at(1), blendMask);
 	data->at(1) = _mm_blend_ps(data->at(1), temp, blendMask);
+
 }
 
 struct Matrix3x3 {
@@ -28,21 +30,17 @@ struct Matrix3x3 {
 
 	inline Matrix3x3 TransponeSIMD() const
 	{
-		union alignas(16) SimdVec {
-			std::array<__m128, 2u> simd;
-			std::array<float, 8u> arr;
-		};
 
 		Matrix3x3 result;
 		result.m[2][2] = m[2][2];
 
-		// �l����
-		SimdVec calc = { _mm_load_ps(m.data()->data()), _mm_load_ps(m.data()->data() + 4u) };
-		// �]�u�֐�
-		TransponeArray(&calc.simd);
-		// ���ʂ���
-		_mm_store_ps(result.m.data()->data(), calc.simd[0]);
-		_mm_store_ps(result.m.data()->data() + 4u, calc.simd[1]);
+		// 値を代入
+		std::array<__m128, 2u> calc = { _mm_load_ps(m.data()->data()), _mm_load_ps(m.data()->data() + 4u) };
+		// 転置関数
+		TransponeArray(&calc);
+		// 結果を代入
+		_mm_store_ps(result.m.data()->data(), calc[0]);
+		_mm_store_ps(result.m.data()->data() + 4u, calc[1]);
 
 		return result;
 	}
