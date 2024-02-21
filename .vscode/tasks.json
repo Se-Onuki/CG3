@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build PG3 project",
+            "detail": "ビルドの開始",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "MSBuild .\\CG3.vcxproj"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
