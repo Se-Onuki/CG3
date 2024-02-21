@@ -1,12 +1,6 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
-//
-// template <size_t X, size_t Y, typename ContainType = float>
-// struct Matrix {
-//
-//    ContainType data_[Y][X];
-//};
 
 // 可変長行列
 class ResizeableMatrix {
@@ -25,13 +19,13 @@ public:
 	size_t GetY() const { return y_; }
 	size_t size() const { return data_.size(); }
 
-	using iterator = std::vector<float>::iterator;
-	using const_iterator = std::vector<float>::const_iterator;
+	using iterator = std::vector<size_t>::iterator;
+	using const_iterator = std::vector<size_t>::const_iterator;
 
 	/// @brief 要素へのアクセス
 	/// @return 要素
-	float &at(size_t y, size_t x) { return data_[x + x_ * y]; }
-	float at(size_t y, size_t x) const { return data_[x + x_ * y]; }
+	size_t &at(size_t y, size_t x) { return data_[x + x_ * y]; }
+	size_t at(size_t y, size_t x) const { return data_[x + x_ * y]; }
 
 	/// @brief 各行の先頭イテレータを取得する
 	iterator atLine(size_t y) { return data_.begin() + x_ * y; }
@@ -61,9 +55,9 @@ public:
 		{
 			auto resultItr = result.data_.begin();
 			// 各行の要素をドット積で計算して、resultに代入
-			for (size_t y = 0; y < y_ and y < left.y_; ++y) {
+			for (size_t y = 0; y < result.y_; ++y) {
 				const_iterator rightItr = this->atLine(y);
-				for (size_t x = 0; x < x_; ++x) {
+				for (size_t x = 0; x < result.x_; ++x) {
 					const_iterator leftItr = left.begin();
 					for (size_t inX = 0; inX < x_; ++inX) {
 						*resultItr += *rightItr++ * *leftItr++;
@@ -86,7 +80,7 @@ public:
 
 		for (size_t y = 0; y < matrix.y_; ++y) {
 			for (size_t x = 0; x < matrix.x_; ++x) {
-				os << *itr++ << " ";
+				os << *itr++ /*<< " "*/;
 			}
 			os << std::endl;
 		}
@@ -100,7 +94,7 @@ public:
 
 private:
 	size_t x_, y_;
-	std::vector<float> data_;
+	std::vector<size_t> data_;
 };
 
 // 行列同士の計算
@@ -108,22 +102,18 @@ private:
 int main(void)
 {
 
-	ResizeableMatrix a(3, 3);
+	size_t x, y;
+	std::cin >> y >> x;
 
-	for (size_t y = 0; y < a.GetY(); ++y) {
-		for (size_t x = 0; x < a.GetX(); ++x) {
-			// 値を代入
-			a.at(y, x) = x + y * a.GetX();
-		}
+	ResizeableMatrix a(y, x);
+	for (auto &itr : a) {
+		std::cin >> itr;
 	}
 
-	ResizeableMatrix b(3, 1);
-
-	for (size_t i = 0; i < b.size(); ++i) {
-		b.begin()[i] = i;
+	ResizeableMatrix b(x, 1);
+	for (auto &itr : b) {
+		std::cin >> itr;
 	}
-	std::cout << a;
 
-	std::cout << a * b << std::endl;
-
+	std::cout << std::fixed << a * b;
 }
