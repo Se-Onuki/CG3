@@ -2,6 +2,7 @@
 #include <chrono>
 #include <immintrin.h>
 #include <iostream>
+#include <cstdio>
 
 static inline void TransponeArray(std::array<__m128, 2u> *data)
 {
