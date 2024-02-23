@@ -7,10 +7,12 @@
 // 可変長行列
 class ResizeableMatrix {
 public:
+	using T = size_t;
+
 	ResizeableMatrix(size_t y = 0u, size_t x = 0u)
 		: x_(x), y_(y)
 	{
-		data_.resize(x * y);
+		data_ = std::make_unique<T[]>(x * y);
 	}
 	ResizeableMatrix(const ResizeableMatrix &) = default;
 	ResizeableMatrix(ResizeableMatrix &&) = default;
@@ -19,28 +21,34 @@ public:
 
 	size_t GetX() const { return x_; }
 	size_t GetY() const { return y_; }
-	size_t size() const { return data_.size(); }
+	size_t size() const { return x_ * y_; }
 
-	using iterator = std::vector<size_t>::iterator;
-	using const_iterator = std::vector<size_t>::const_iterator;
+	using iterator = T *;
+	using const_iterator = const T *;
 
 	/// @brief 要素へのアクセス
 	/// @return 要素
-	size_t &at(size_t y, size_t x) { return data_[x + x_ * y]; }
-	size_t at(size_t y, size_t x) const { return data_[x + x_ * y]; }
+	T &at(size_t y, size_t x) { return data_[x + x_ * y]; }
+	T at(size_t y, size_t x) const { return data_[x + x_ * y]; }
 
 	/// @brief 各行の先頭イテレータを取得する
-	iterator atLine(size_t y) { return data_.begin() + x_ * y; }
-	const_iterator atLine(size_t y) const { return data_.begin() + x_ * y; }
+	iterator atLine(size_t y) { return data_.get() + x_ * y; }
+	const_iterator atLine(size_t y) const { return data_.get() + x_ * y; }
 
-	std::vector<size_t> GetLine(size_t y) const { return std::vector<size_t>(data_.begin() + x_ * y, data_.begin() + x_ * (y + 1)); }
-	std::vector<size_t> GetVerticalLine(size_t x) const
+	std::unique_ptr<T[]> GetLine(size_t y) const {
+		std::unique_ptr<T[]> result = std::make_unique<T[]>(x_);
+
+		std::copy(this->begin() + x_ * y, this->begin() + x_ * (y + 1), result.get());
+
+		return std::move(result);
+	}
+	std::unique_ptr<T[]> GetVerticalLine(size_t x) const
 	{
-		std::vector<size_t> result(y_);
+		std::unique_ptr<T[]> result = std::make_unique<T[]>(y_);
 		for (size_t y = 0; y < y_; ++y) {
 			result[y] = at(y, x);
 		}
-		return result;
+		return std::move(result);
 	}
 
 	/// @brief 行列の積
@@ -55,7 +63,7 @@ public:
 		// 右辺を転置
 		ResizeableMatrix right(other.x_, other.y_);
 		{
-			auto rightItr = right.data_.begin();
+			auto rightItr = right.begin();
 			for (size_t y = 0; y < right.y_; ++y) {
 				for (size_t x = 0; x < right.x_; ++x) {
 					// 転置して代入
@@ -65,7 +73,7 @@ public:
 		}
 		ResizeableMatrix result(y_, other.x_);
 		{
-			auto resultItr = result.data_.begin();
+			auto resultItr = result.begin();
 
 			// 各行の要素をドット積で計算して、resultに代入
 			for (size_t y = 0; y < y_; ++y) {
@@ -89,10 +97,10 @@ public:
 	/// @return ストリーム
 	friend std::ostream &operator<<(std::ostream &os, const ResizeableMatrix &matrix)
 	{
-		auto itr = matrix.data_.begin();
+		auto itr = matrix.begin();
 
-		for (size_t y = 0; y < matrix.y_; ++y) {
-			for (size_t x = 0; x < matrix.x_; ++x) {
+		for (T y = 0; y < matrix.y_; ++y) {
+			for (T x = 0; x < matrix.x_; ++x) {
 				os << *itr++;
 				if (x < matrix.x_ - 1) {
 					os << ' ';
@@ -105,14 +113,17 @@ public:
 		return os;
 	}
 
-	iterator begin() { return data_.begin(); }
-	iterator end() { return data_.end(); }
+	iterator begin() { return data_.get(); }
+	iterator end() { return data_.get() + size(); }
+
+	const_iterator begin() const { return data_.get(); }
+	const_iterator end() const { return data_.get() + size(); }
 
 	operator bool() const { return not x_ or not y_; }
 
 private:
 	size_t x_, y_;
-	std::vector<size_t> data_;
+	std::unique_ptr<T[]> data_;
 };
 
 // 行列同士の計算
