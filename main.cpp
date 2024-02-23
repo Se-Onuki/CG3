@@ -106,9 +106,7 @@ public:
 					os << ' ';
 				}
 			}
-			//if (y < matrix.y_ - 1) {
 			os << std::endl;
-			//}
 		}
 		return os;
 	}
