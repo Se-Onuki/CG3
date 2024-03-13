@@ -27,15 +27,16 @@ struct StaticString {
 
 	constexpr const char *c_str() const noexcept { return str_.buf_.data(); }
 
-	constexpr bool operator<(const StaticString &other) const noexcept {
-		return std::string_view{ c_str(), str_.length_ } < std::string_view{ other.c_str(), other.str_.length_ };
+	template <ConstExprString T>
+	constexpr bool operator<(const StaticString<T> &other) const noexcept {
+		return c_str() < other.c_str();
 	}
 };
 
 // StaticStringをキーとするコンテナの実装
 template <typename T, ConstExprString... StaticStrings>
 struct StaticStringMap {
-	inline static constexpr std::tuple<std::pair<StaticString<StaticStrings>, T>...> data_ = {
+	inline static std::tuple<std::pair<StaticString<StaticStrings>, T>...> data_ = {
 		std::make_tuple(std::make_pair(StaticString<StaticStrings>{}, T{})...)
 	};
 
@@ -44,16 +45,32 @@ struct StaticStringMap {
 	static constexpr const T &get() {
 		return std::get<std::pair<StaticString<Str>, T>>(data_).second;
 	}
+
+	// StaticStringに対応する値を設定する
+	template <ConstExprString Str>
+	static constexpr void set(const T &value) {
+		std::get<std::pair<StaticString<Str>, T>>(data_).second = value;
+	}
 };
 
 int main() {
 	// コンテナの初期化
-	using MapType = StaticStringMap<int, "hello", "world">;
-	constexpr auto value1 = MapType::get<"hello">();
-	constexpr auto value2 = MapType::get<"world">();
+	using MapType = StaticStringMap<std::string, "hello", "world">;
+	std::string value1 = MapType::get<"hello">();
+	std::string value2 = MapType::get<"world">();
 
 	std::cout << "Value for key 'hello': " << value1 << std::endl;
 	std::cout << "Value for key 'world': " << value2 << std::endl;
+
+	// 値の変更
+	MapType::set<"hello">("Bonjour");
+	MapType::set<"world">("Monde");
+
+	std::string newValue1 = MapType::get<"hello">();
+	std::string newValue2 = MapType::get<"world">();
+
+	std::cout << "Updated value for key 'hello': " << newValue1 << std::endl;
+	std::cout << "Updated value for key 'world': " << newValue2 << std::endl;
 
 	return 0;
 }
