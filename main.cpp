@@ -51,13 +51,19 @@ struct StaticStringMap {
 	static constexpr void set(const T &value) {
 		std::get<std::pair<StaticString<Str>, T>>(data_).second = value;
 	}
+
+	// StaticStringに対応する値を設定する
+	template <ConstExprString Str>
+	static constexpr void set(T &&value) {
+		std::get<std::pair<StaticString<Str>, T>>(data_).second = std::move(value);
+	}
 };
 
 int main() {
 	// コンテナの初期化
 	using MapType = StaticStringMap<std::string, "hello", "world">;
-	std::string value1 = MapType::get<"hello">();
-	std::string value2 = MapType::get<"world">();
+	const auto &value1 = MapType::get<"hello">();
+	const auto &value2 = MapType::get<"world">();
 
 	std::cout << "Value for key 'hello': " << value1 << std::endl;
 	std::cout << "Value for key 'world': " << value2 << std::endl;
@@ -66,11 +72,8 @@ int main() {
 	MapType::set<"hello">("Bonjour");
 	MapType::set<"world">("Monde");
 
-	std::string newValue1 = MapType::get<"hello">();
-	std::string newValue2 = MapType::get<"world">();
-
-	std::cout << "Updated value for key 'hello': " << newValue1 << std::endl;
-	std::cout << "Updated value for key 'world': " << newValue2 << std::endl;
+	std::cout << "Updated value for key 'hello': " << MapType::get<"hello">() << std::endl;
+	std::cout << "Updated value for key 'world': " << MapType::get<"world">() << std::endl;
 
 	return 0;
 }
