@@ -442,37 +442,34 @@ struct Dice {
 int main()
 {
 
+	static const std::array<Vector3, 6u> kDiceFacing{
+		Vector3::up(),
+		-Vector3::front(),
+		Vector3::right(),
+		-Vector3::right(),
+		Vector3::front(),
+		-Vector3::up(),
+	};
+
 	// 面のデータを取得する
 	Dice dice;
 	for (auto &face : dice.faceNum_) {
 		std::cin >> face;
 	}
-	// ダイスの操作
-	std::string movement;
-	std::cin >> movement;
+	size_t count{};
+	std::cin >> count;
+	for (size_t i = 0; i < count; i++) {
+		size_t up, back;
+		std::cin >> up >> back;
+		size_t upIdx = std::distance(dice.faceNum_.begin(), std::find(dice.faceNum_.begin(), dice.faceNum_.end(), up));
+		size_t backIdx = std::distance(dice.faceNum_.begin(), std::find(dice.faceNum_.begin(), dice.faceNum_.end(), back));
 
-	for (const char item : movement) {
-		if (item == '\0') { break; }
-		switch (item) {
-		case 'N':
-			dice = dice.Move(Dice::Direction::kNorth);
-			break;
-		case 'E':
-			dice = dice.Move(Dice::Direction::kEast);
-			break;
-		case 'S':
-			dice = dice.Move(Dice::Direction::kSouth);
-			break;
-		case 'W':
-			dice = dice.Move(Dice::Direction::kWest);
-			break;
-		default:
-			break;
-		}
+		Vector3 right = -kDiceFacing[upIdx].cross(kDiceFacing[backIdx]).Nomalize();
 
+		std::cout << dice.GetFaceNum(right) << std::endl;
 
 	}
-	std::cout << dice.GetFaceNum(dice.facing_.GetUp()) << std::endl;
+
 
 
 
