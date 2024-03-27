@@ -406,15 +406,14 @@ struct Dice {
 		return result;
 	}
 
-	uint32_t GetFaceNum() const
+	uint32_t GetFaceNum(const Vector3 &dirr) const
 	{
 		uint32_t index{};
-		Vector3 upVec = facing_.GetUp();
 		float buf{};
 		uint32_t bufInd{};
 		for (uint32_t i = 0; i < 3; i++) {
-			if (buf < std::abs(upVec[i])) {
-				buf = std::abs(upVec[i]);
+			if (buf < std::abs(dirr[i])) {
+				buf = std::abs(dirr[i]);
 				bufInd = i;
 			}
 		}
@@ -432,7 +431,7 @@ struct Dice {
 			break;
 		}
 
-		if ((upVec.x + upVec.y + upVec.z) < 0.f) {
+		if ((dirr.x + dirr.y + dirr.z) < 0.f) {
 			index = 5 - index;
 		}
 
@@ -473,7 +472,7 @@ int main()
 
 
 	}
-	std::cout << dice.GetFaceNum() << std::endl;
+	std::cout << dice.GetFaceNum(dice.facing_.GetUp()) << std::endl;
 
 
 
